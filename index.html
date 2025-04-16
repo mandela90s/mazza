@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOL Alpha Radar - Real-Time Solana Meme/AI Coin Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <style>
+        :root {
+            --primary: #9945FF;
+            --secondary: #14F195;
+            --dark: #0F0F0F;
+            --light: #F0F0F0;
+            --accent: #FF5F5F;
+            --card-bg: #1A1A1A;
+            --success: #00C853;
+            --warning: #FFAB00;
+            --danger: #FF5252;
+            --twitter-blue: #1DA1F2;
+            --telegram-blue: #0088CC;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            padding: 15px 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .logo-icon {
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .nav-links a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .time-filter {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .time-filter select {
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            outline: none;
+        }
+        
+        .time-filter option {
+            background-color: var(--dark);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 30px auto;
+        }
+        
+        .panel {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            height: calc(100vh - 150px);
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+        
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .panel-title i {
+            color: var(--primary);
+        }
+        
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            color: var(--secondary);
+            transform: rotate(180deg);
+        }
+        
+        /* Whale Watch Panel */
+        .whale-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .whale-card:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .whale-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .whale-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .whale-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .whale-address {
+            font-size: 12px;
+            opacity: 0.7;
+            word-break: break-all;
+        }
+        
+        .transaction {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+        
+        .coin-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .coin-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--dark);
+            font-weight: bold;
+        }
+        
+        .buy {
+            color: var(--success);
+        }
+        
+        .sell {
+            color: var(--danger);
+        }
+        
+        .tx-amount {
+            font-weight: 600;
+        }
+        
+        .tx-time {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        /* Twitter Feed Panel */
+        .tweet-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .tweet-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .tweet-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--twitter-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .tweet-user {
+            font-weight: 600;
+        }
+        
+        .tweet-handle {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .tweet-content {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .tweet-actions {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+        }
+        
+        .tweet-action {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+        
+        .tweet-action:hover {
+            opacity: 1;
+            color: var(--primary);
+        }
+        
+        .add-influencer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .add-influencer input {
+            flex: 1;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .add-influencer button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .add-influencer button:hover {
+            background-color: var(--secondary);
+        }
+        
+        /* Telegram Calls Panel */
+        .call-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .call-rank {
+            font-size: 18px;
+            font-weight: 700;
+            width: 30px;
+            text-align: center;
+            color: var(--secondary);
+        }
+        
+        .call-info {
+            flex: 1;
+            margin-left: 15px;
+        }
+        
+        .call-coin {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .call-group {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .call-count {
+            background-color: var(--telegram-blue);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .up {
+            color: var(--success);
+        }
+        
+        .down {
+            color: var(--danger);
+        }
+        
+        /* Coin Chart */
+        .coin-chart {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            height: 300px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .panel {
+                height: auto;
+                max-height: 500px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+        
+        /* Pulse animation for new items */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(153, 69, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(153, 69, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(153, 69, 255, 0); }
+        }
+        
+        .new-item {
+            animation: pulse 1.5s infinite;
+            position: relative;
+        }
+        
+        .new-item::after {
+            content: "NEW";
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--accent);
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 10px;
+        }
+        
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--card-bg);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            border: 1px solid var(--primary);
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Notification badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-active {
+            background-color: var(--success);
+        }
+        
+        .status-inactive {
+            background-color: var(--danger);
+        }
+
+        /* Whale logo */
+        .whale-logo {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+
+        /* Multiple whales indicator */
+        .whale-count {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            text-align: center;
+            line-height: 18px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content container">
+            <div class="logo">
+                <i class="fas fa-radar logo-icon"></i>
+                <span>SOL Alpha Radar</span>
+            </div>
+            <div class="time-filter">
+                <i class="fas fa-clock"></i>
+                <select id="timeRange">
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="12h">Last 12 Hours</option>
+                    <option value="6h">Last 6 Hours</option>
+                    <option value="1h">Last Hour</option>
+                </select>
+            </div>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator status-active"></span>
+                <span>Connected</span>
+            </div>
+        </div>
+    </header>
+    
+    <div class="dashboard container">
+        <!-- Whale Watch Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <img src="https://cryptologos.cc/logos/whale-watch-wlogo.png" class="whale-logo" alt="Whale">
+                    Whale Watch
+                    <div class="notification-badge" id="whaleNotification" style="display: none;">0</div>
+                </div>
+                <button class="refresh-btn" title="Refresh Data" id="refreshWhales">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <div id="whaleTransactions">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <span>Loading whale transactions...</span>
+                </div>
+            </div>
+            
+            <div class="coin-chart">
+                <canvas id="whaleActivityChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Twitter Feed Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fab fa-twitter"></i>
+                    Influencer Tweets
+                    <div class="notification-badge" id="tweetNotification" style="display: none;">0</div>
+                </div>
+                <button class="refresh-btn" title="Refresh Data" id="refreshTweets">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <div id="tweetFeed">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <span>Loading influencer tweets...</span>
+                </div>
+            </div>
+            
+            <div class="add-influencer">
+                <input type="text" placeholder="Add Twitter handle (without @)" id="newInfluencer">
+                <button id="addInfluencerBtn">Add</button>
+            </div>
+        </div>
+        
+        <!-- Telegram Calls Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fab fa-telegram"></i>
+                    Telegram Call Trends
+                    <div class="notification-badge" id="callNotification" style="display: none;">0</div>
+                </div>
+                <button class="refresh-btn" title="Refresh Data" id="refreshCalls">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <div id="telegramCalls">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <span>Loading telegram calls...</span>
+                </div>
+            </div>
+            
+            <div class="coin-chart">
+                <canvas id="callTrendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // All whale wallets you provided
+        const whaleWallets = [
+            { name: "Ansem", address: "AVAZvHLR2PcWpDf8BXY4rVxNHYRBytycHkcB5z5QNXYm", emoji: "🚀" },
+            { name: "Bastille", address: "3kebnKw7cPdSkLRfiMEALyZJGZ4wdiSRvmoN4rD1yPzV", emoji: "😀" },
+            { name: "daumen.eth", address: "8MaVa9kdt3NW4Q5HyNAm1X5LbR8PQRVDc1W8NMVK88D5", emoji: "😀" },
+            { name: "meechie", address: "831qmkeGhfL8YpcXuhrug6nHj1YdK3aXMDQUCo85Auh1", emoji: "😀" },
+            { name: "moneymaykah", address: "2CXbN6nuTTb4vCrtYM89SfQHMMKGPAW4mvFe6Ht4Yo6z", emoji: "😀" },
+            { name: "Dior", address: "D2wBctC1K2mEtA17i8ZfdEubkiksiAH2j8F7ri3ec71V", emoji: "😀" },
+            { name: "mitch (idrawline)", address: "4Be9CvxqHW6BYiRAxW9Q3xu1ycTMWaL5z8NX4HR3ha7t", emoji: "😀" },
+            { name: "Cupsey", address: "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK", emoji: "🧁" },
+            { name: "Polar", address: "GTvBQnRvAPweU2qmYg8MDLND2PAAyYFKe35aKQGMRDaL", emoji: "❄️" },
+            { name: "Nach", address: "4aDdi3EiDPMbeZ3e5BvbFMt4vfJaoahaHxZuwKQRtFc1", emoji: "😀" },
+            { name: "POW", address: "8zFZHuSRuDpuAR7J6FzwyF3vKNx4CVW3DFHJerQhc7Zd", emoji: "😀" },
+            { name: "Cooker", address: "8deJ9xeUvXSJwicYptA9mHsU2rN2pDx37KWzkDkEXhU6", emoji: "👨‍🍳" },
+            { name: "Staqi", address: "3rSZJHysEk2ueFVovRLtZ8LGnQBMZGg96H2Q4jErspAF", emoji: "😀" },
+            { name: "Frankdegod", address: "CRVidEDtEUTYZisCxBZkpELzhQc9eauMLR3FWg74tReL", emoji: "😀" },
+            { name: "LEENS", address: "7Dt5oUpxHWuKH8bCTXDLz2j3JyxA7jEmtzqCG6pnh96X", emoji: "😜" },
+            { name: "Spuno", address: "GfXQesPe3Zuwg8JhAt6Cg8euJDTVx751enp9EQQmhzPH", emoji: "🍕" },
+            { name: "FaZe Banks", address: "CkxVhktjqYuhsVfNQzqEZkwQ2gMU1wEFPM3FSSVXGjM9", emoji: "😀" },
+            { name: "Euris", address: "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj", emoji: "😀" },
+            { name: "assasin.eth", address: "6LChaYRYtEYjLEHhzo4HdEmgNwu2aia8CM8VhR9wn6n7", emoji: "😀" },
+            { name: "Al4n", address: "2AtFkEamLgK9ByuFX5XmG7WHZ9CVLFC6pxhWpfYkL1KZ", emoji: "4️⃣" },
+            { name: "NACH", address: "9jyqFiLnruggwNn4EQwBNFXwpbLM9hrA4hV59ytyAVVz", emoji: "😀" },
+            { name: "SolShotta", address: "NFJKkZ7yeoAvfHLWNiqAw6CYKWnVAVAQu5PE3AC3qYt", emoji: "😀" },
+            { name: "Terp", address: "G2VzymsKt3zNAn4CKBndYcS67w6Kny5sDEp7Y2W1aTf6", emoji: "👨" },
+            { name: "FaZe Lacy", address: "9nJ72hhtwyGHoUbEN3xfGuiLnrX3SnLYX52hkoahn2YH", emoji: "💋" },
+            { name: "Terp", address: "HkFt55P3PhRWHXoTFeuvkKEE4ab26xZ1bk6UmXV88Pwz", emoji: "👨" },
+            { name: "Al4n", address: "2YJbcB9G8wePrpVBcT31o8JEed6L3abgyCjt5qkJMymV", emoji: "4️⃣" },
+            { name: "Insentos", address: "7SDs3PjT2mswKQ7Zo4FTucn9gJdtuW4jaacPA65BseHS", emoji: "😀" },
+            { name: "GH0STEE", address: "BD7oWkEQsUwE8sj4UT7jtrGjHC8Gq1iRqXY7U6DTbJpf", emoji: "👻" },
+            { name: "Orangie", address: "BiqkWhrJ4dfpE6TeNY34tA4GssG23SBH8CU8mqB7xZ6t", emoji: "🍊" },
+            { name: "Waddles", address: "73LnJ7G9ffBDjEBGgJDdgvLUhD5APLonKrNiHsKDCw5B", emoji: "😀" },
+            { name: "Kai", address: "3pkY4S76Jw1UDS8Qgz4wD3DxrTxz7QfyC8yTbXJoZcMT", emoji: "🦊" },
+            { name: "Jalen", address: "F72vY99ihQsYwqEDCfz7igKXA5me6vN2zqVsVUTpw6qL", emoji: "🍊️" },
+            { name: "TRAX", address: "EABXkKHLdH8Cb8YjJ2Zcj4ybnY4xUDbXELs9cy6rMQi8", emoji: "🛹" },
+            { name: "Barsik", address: "9UWZFoiCHeYRLmzmDJhdMrP7wgrTw7DMSpPiT2eHgJHe", emoji: "😀" },
+            { name: "qt", address: "EhRp3PVPqCe2ms3Cjgxg9LSXygxCkJfehPZnVPGienpg", emoji: "😀" },
+            { name: "Teige", address: "CmgPfZHXQ1j3HUTcr6ByoqbfMF19VqFbym34AawHDoTL", emoji: "🤎" },
+            { name: "profit", address: "G5nxEXuFMfV74DSnsrSatqCW32F34XUnBeq3PfDS7w5E", emoji: "💰" },
+            { name: "Admiral", address: "HD5fsofvcEaSimExUkPQxYPec3nT8g2tP2tw8oGPrpBT", emoji: "🕐️" },
+            { name: "Zrool", address: "99i9uVA7Q56bY22ajKKUfTZTgTeP5yCtVGsrG9J4pDYQ", emoji: "😀" },
+            { name: "Orange", address: "96sErVjEN7LNJ6Uvj63bdRWZxNuBngj56fnT9biHLKBf", emoji: "🏮" },
+            { name: "Joji", address: "525LueqAyZJueCoiisfWy6nyh4MTvmF4X9jSqi6efXJT", emoji: "🖕️" },
+            { name: "Staqi", address: "636N7frU8bUwYfyUAtvMQQsXhTFRuSWjxnEZihr5axGV", emoji: "😀" },
+            { name: "Cented", address: "XDgpjPubjN5soLAFmAMjD2uVR1XZxUKgNpMU6Eo97H7", emoji: "💶" },
+            { name: "ShockedJS", address: "4Bq5yvgoiZDsukGERb7aM52jDmbVPCpoihbztscZ5PeM", emoji: "🤯" },
+            { name: "Bugha", address: "HABhDh9zrzf8mA4SBo1yro8M6AirH2hZdLNPpuvMH6iA", emoji: "🇺🇸" },
+            { name: "Nick", address: "4mNSHeknNwJ7cfjKwarqt6aNvj5yf8mzfLEKEJjroXpJ", emoji: "🌏" },
+            { name: "UNION", address: "AJ6MGExeK7FXmeKkKPmALjcdXVStXYokYNv9uVfDRtvo", emoji: "😀" },
+            { name: "Danny", address: "9FNz4MjPUmnJqTf6yEDbL1D4SsHVh7uA8zRHhR5K138r", emoji: "🧑‍🦱‍➡️" },
+            { name: "mafia", address: "GxNa3Fza4e3GSDqccT978EuheTwu7af3DaB6JkqPtjU5", emoji: "🕵️" },
+            { name: "yog", address: "9fR8gerfvGSycFGbK2VY1PFrPuU9jS6QM47S974yTUHC", emoji: "🧘‍♂️🎤" },
+            { name: "Cozy", address: "GKT2j5gPqY2ZKfhaGB5cn5bTHLSKTUrULe8wG1QwmLpt", emoji: "🧑🏻‍🦯🦮⚡️" },
+            { name: "Blob1", address: "7DCYBoCuLWwYaQHhXxv6F6SV5ZAmnuhR1oucNYgVZWLa", emoji: "👨🏻‍🦱➡️♂️" },
+            { name: "maestro", address: "45yBcpnzFTqLYQJtjxsa1DdZkgrTYponCg6yLQ6LQPu6", emoji: "🦹🏽‍♀️" },
+            { name: "Grandfnf7", address: "RH6epK9UW5vA5rm23FcLi4rPuTJjwya6UQJeG1tigv3", emoji: "🗞️" },
+            { name: "Grandfnf6", address: "BrNoqdHUCcv9yTncnZeSjSov8kqhpmzv1nAiPbq1M95H", emoji: "🟟" },
+            { name: "Grandfnf5", address: "7SDs3PjT2mswKQ7Zo4FTucn9gJdtuW4jaacPA65BseHS", emoji: "🍊➡️♀️" },
+            { name: "Grandfnf4", address: "2huXTbjeBhtMZ1ugNwUGucYBRasRaaiypymUX6P1Kwjx", emoji: "👨🏽‍🦽🦸‍♀️" },
+            { name: "Grandfnf3", address: "86AArCufuDZ1bUYjjdfAbDLM7HFdkeeMhTbsEeEHXQAR", emoji: "👨🏿‍🦲♂️️" },
+            { name: "Grandfnf2", address: "FVxeFYgyT4GC6D7gaLkMSu2qtSJfw2N4RVPZowi2A64Y", emoji: "🏧" },
+            { name: "Grandfnf1", address: "DGPYpCdiVg2shab2TnNiZ2RnsjBQSmhgN71hJyWC5cYn", emoji: "🕔" },
+            { name: "Blob3", address: "4EsY8HQB4Ak65diFrSHjwWhKSGC8sKmnzyusM993gk2w", emoji: "🦝" },
+            { name: "Blob5", address: "2vkYVxq7HqrB2dzUH4VQ28wGAzv5c6ySt5uqPss5rGTJ", emoji: "🧑🏿‍🦽🦸‍♀️⚡" },
+            { name: "Blob7", address: "5afSYA7JRyTvpbiypNjTMj6SsYAopXjvZwSPpx6ZzdiU", emoji: "👀➡️" },
+            { name: "Sink", address: "6BJ8YTiiDdSxy7RNLHd4hurmvUjreRFoxLGKYftAGb4x", emoji: "🦆🏽" },
+            { name: "killz", address: "HrTZPWV4ZPebBiwyzoTBajCD49kQqVwf4dwsLuYG8CXX", emoji: "👨🏿‍🦽❤️️👨🏿‍🦽" },
+            { name: "Devistiny", address: "5qvLmTd6yKMn7T7DP6RPPcASBH231Rtvjta1Pzao48PR", emoji: "👨🏿‍🦽♀️️" },
+            { name: "Kenzo", address: "ECCKBDWX3MkEcf3bULbLBb9FvrEQLsmPMFTKFpvjzqgP", emoji: "🤮🏿" },
+            { name: "ROwdy", address: "DKgvpfttzmJqZXdavDwTxwSVkajibjzJnN2FA99dyciK", emoji: "❤️" },
+            { name: "Qwerky", address: "CPydqKcEEeKTR6wt3L15G8S5Ea4bxjS2vvjiW9vw1UwK", emoji: "👨🏿❤️️👨🏽" },
+            { name: "Profiteer", address: "FbvUU5qvD9JsU9jp3KDweCpZiVZHLoQBQ1PPCAAbd6FB", emoji: "😊" },
+            { name: "Insentos", address: "3tc4BVAdzjr1JpeZu6NAjLHyp4kK3iic7TexMBYGJ4Xk", emoji: "🤸🏽‍♂️️" },
+            { name: "Beast", address: "B3wagQZiZU2hKa5pUCj6rrdhWsX3Q6WfTTnki9PjwzMh", emoji: "⏬" },
+            { name: "GorillaCap", address: "DpNVrtA3ERfKzX4F8Pi2CVykdJJjoNxyY5QgoytAwD26", emoji: "🤹‍♂️" },
+            { name: "Spuno", address: "GfXQesPe3Zuwg8JhAt6Cg8euJDTVx751enp9EQQmhzPH", emoji: "🧑🏿‍🦽🍗" },
+            { name: "mercy", address: "F5jWYuiDLTiaLYa54D88YbpXgEsA6NKHzWy4SN4bMYjt", emoji: "⛅️" },
+            { name: "Polar", address: "GTvBQnRvAPweU2qmYg8MDLND2PAAyYFKe35aKQGMRDaL", emoji: "🤑🏿" },
+            { name: "Assasin.eth", address: "6LChaYRYtEYjLEHhzo4HdEmgNwu2aia8CM8VhR9wn6n7", emoji: "👨🏿‍🦽" },
+            { name: "NYM?", address: "694X5Cuvx6xs4y2aDBu5U1RkZS4RTbcUCZ8qLbH7bVPc", emoji: "👨🏿‍🦽🦹‍♂️" },
+            { name: "pullup", address: "981G4w1e6zSiy6gBtYLGdFjF7rmFgAXXgA3mgKwPzwyS", emoji: "🍊🏿♂️" },
+            { name: "tobi", address: "HdxkiXqeN6qpK2YbG51W23QSWj3Yygc1eEk2zwmKJExp", emoji: "👨🏿‍🦽🦹‍♂️" },
+            { name: "Noodles17", address: "3h65MmPZksoKKyEpEjnWU2Yk2iYT5oZDNitGy5cTaxoE", emoji: "🖐🏿♂️️" },
+            { name: "noodles12", address: "Cy7hf1nqP2oaWiZ1JERWNN1VNxDZtFTLLAqcHLLygviD", emoji: "👨🏿‍🦽♂️️" },
+            { name: "Noodles13", address: "2Dk2je4iif7yttyGMLbjc8JrqUSMw2wqLPuHxVsJZ2Bg", emoji: "🦉" },
+            { name: "noodles14", address: "DQHHpjr7ukrg5F9ugwP4P9U7Xzjti45JE1QcwhpMz8rQ", emoji: "🤸🏿‍♂️️" },
+            { name: "Noodles15", address: "HbCxe8yWQJWnK3f3FX4oohgm87FZuPYD4Ydszqxgkwft", emoji: "❔" },
+            { name: "Noodles11", address: "3daLWaPMpiw42nVGFS6pCBXECR7hEz4ThAEFvvcsggts", emoji: "🤦" },
+            { name: "Noodles9", address: "2YrKxjg1WKPqd19ivu6fWkfCG7VFZPyCAGYefd9zAnC7", emoji: "💋" },
+            { name: "Noodles8", address: "5TMR5GFPTzkNhprnty2ocXEFLoLur1uchg4NkEr5WEf4", emoji: "👨🏿‍🦽🦸‍♀️⚡️" },
+            { name: "Noodles5", address: "6yDVFRXrzVrMa8ULYdbaJ8kLm3X6EM3wgFgDQ2MV1MQG", emoji: "👨🏿❤️🤦👨🏿" },
+            { name: "Noodles4", address: "76fx1SGT35mqUfG5dcmpWS2gzLBr5AGrvMDEq144XPkJ", emoji: "💏🏿♀️️" },
+            { name: "Noodles3", address: "EtTaTMBX9ErigazzzGmD8vq9mcwFoHrxchr2ewwzsefG", emoji: "👨" },
+            { name: "Noodles2", address: "EDoonKrsParDnA4yJKJ3iDNEaFVfcaxSULqzQyNkwa61", emoji: "🙏🏿♀️️" },
+            { name: "Noodle1", address: "HRdSabSdbNsrzMXvAAMn9SDXTBt8YbtZiUhm64MDkh8c", emoji: "☑️" },
+            { name: "Orangie", address: "26kZ9rg8Y5pd4j1tdT4cbT8BQRu5uDbXkaVs3L5QasHy", emoji: "👋🏿♀️" },
+            { name: "Frank Alt", address: "AbcX4XBm7DJ3i9p29i6sU8WLmiW4FWY5tiwB9D6UBbcE", emoji: "🤜🏿" },
+            { name: "Staqi", address: "3rSZJHysEk2ueFVovRLtZ8LGnQBMZGg96H2Q4jErspAF", emoji: "🤸🏿♀️" },
+            { name: "Nach", address: "9jyqFiLnruggwNn4EQwBNFXwpbLM9hrA4hV59ytyAVVz", emoji: "🖐" },
+            { name: "Cupsey", address: "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK", emoji: "🤸🏿" },
+            { name: "Luci", address: "DrwHXMZqsPhfqZw8GpqNvTYq9Vgh3ch3u9AqSVBN13yG", emoji: "🤙🏽" },
+            { name: "Frank", address: "CRVidEDtEUTYZisCxBZkpELzhQc9eauMLR3FWg74tReL", emoji: "🚨" },
+            { name: "FishFish", address: "ARSdp5MFL1bjgWddK8dkF3QdttHvy5ZdVjJ6T8BHJimo", emoji: "🧑🏿‍🦽♾️" },
+            { name: "GME", address: "2PBRmZuPxeLAAmyHLCLQgikB5HGP1Y7mLzg6KpNNVJ16", emoji: "🤚🏿♀️️" },
+            { name: "DJT", address: "7Bffdhza5V7zBK7EyEQ5eFQ4fkxvutjMsiJjJUs9ZfkC", emoji: "👨🏿‍🦽🏽" },
+            { name: "Jake", address: "4SbDMrX8Zfj7qZtRKTBSQEavPkc7BP1kiJfT2f3dn8RL", emoji: "🤷🏽" },
+            { name: "Fletch", address: "ELSyW68qyAToytdaMkyQhgGL9FErGimoPA27AagingJtE", emoji: "🚅" },
+            { name: "Waddles", address: "73LnJ7G9ffBDjEBGgJDdgvLUhD5APLonKrNiHsKDCw5B", emoji: "👨‍♀️️" },
+            { name: "cooker", address: "8deJ9xeUvXSJwicYptA9mHsU2rN2pDx37KWzkDkEXhU6", emoji: "🙏➡️♀️⚡️" },
+            { name: "Ferb", address: "m7Kaas3Kd8FHLnCioSjCoSuVDReZ6FDNBVM6HTNYuF7", emoji: "🔍" },
+            { name: "Ne0n", address: "3jN1M8gWLk2ryTGnscrcwRK1Gy4Ttzq5QizWT8uizZsT", emoji: "🎟️" },
+            { name: "GOAT", address: "581XaxPQ7jGqqFGh3RQhK8wESBrEvFCAry7EDq2NzacH", emoji: "👨🏿‍🦽♀️️" },
+            { name: "Smart10", address: "8RTDA7rQadKhCGyWdzxqhD5pm3mXg9MjmAGxn8BZ1S6C", emoji: "😃" },
+            { name: "GAKE", address: "DNfuF1L62WWyW3pNakVkyGGFzVVhj4Yr52jSmdTyeBHm", emoji: "🧑🏿🍗♀️" },
+            { name: "TheVoice", address: "DSVc1Rd69sLcXBoZAsvkzK4jGFyJKP77K3J2CaFVNAFP", emoji: "♀" },
+            { name: "MATL", address: "4hSXPtxZgXFpo6Vxq9yqxNjcBoqWN3VoaPJWonUtupzD", emoji: "🤙🏿" },
+            { name: "Mitch", address: "4Be9CvxqHW6BYiRAxW9Q3xu1ycTMWaL5z8NX4HR3ha7t", emoji: "🤦🏽" },
+            { name: "Yenni", address: "5B52w1ZW9tuwUduueP5J7HXz5AcGfruGoX6YoAudvyxG", emoji: "✌🏽" },
+            { name: "StickTest", address: "BpycpQ7STrD8d73kjui5nzJmp7EBAgSmFfV8zeqMMX5z", emoji: "🤸🏿" },
+            { name: "Daumun", address: "8MaVa9kdt3NW4Q5HyNAm1X5LbR8PQRVDc1W8NMVK88D5", emoji: "🚔🏿♀️️" },
+            { name: "Glitch", address: "D18EmaqFyXJ35GA9XP41qecF72JsyJNo6ZtrTDfi5xGH", emoji: "🚗🏿♂️️" },
+            { name: "Trench", address: "2byqB8Pypvq6s8W126yJc9SxToTiWTfNFuDU3ZTq9CLT", emoji: "👋🏿♀️" },
+            { name: "Bastille", address: "3kebnKw7cPdSkLRfiMEALyZJGZ4wdiSRvmoN4rD1yPzV", emoji: "📇" },
+            { name: "POW", address: "CWvdyvKHEu8Z6QqGraJT3sLPyp9bJfFhoXcxUYRKC8ou", emoji: "⛹🏿♂️️" },
+            { name: "SolShotta", address: "dVs7zZksjFuq73xbtUC62brFXYYuxCuPSG4wZeGiHck", emoji: "🚹" },
+            { name: "Gm6", address: "HXkaN7TAQYXsybY1UHLrn18cVa9jgM3mbReasbAoSjTv", emoji: "🙏🏿♂️️" },
+            { name: "0xuezhang|985.eth", address: "Gf9XgdmvNHt8fUTFsWAccNbKeyDXsgJyZN8iFJKg5Pbd", emoji: "📇🏿" },
+            { name: "0xSun", address: "HUpPyLU8KWisCAr3mzWy2FKT6uuxQ2qGgJQxyTpDoes5", emoji: "🧑🏿‍🦽♀️️" },
+            { name: "binance insider", address: "9YgRrhnZdP9SWszUVmskkNfjZLuEfuYmpU4rd3YN7jPU", emoji: "💹" },
+            { name: "risk100 top tra", address: "BHREKFkPQgAtDs8Vb1UfLkUpjG6ScidTjHaCWFuG2AtX", emoji: "😀" }
+        ];
+
+        // Top 100+ Crypto Influencers
+        const cryptoInfluencers = [
+            { name: "Ansem", handle: "blknoiz06" },
+            { name: "Cobie", handle: "cobie" },
+            { name: "Hsaka", handle: "HsakaTrades" },
+            { name: "Loomdart", handle: "loomdart" },
+            { name: "Pentoshi", handle: "Pentosh1" },
+            { name: "The Crypto Dog", handle: "TheCryptoDog" },
+            { name: "Cantering Clark", handle: "CanteringClark" },
+            { name: "Light", handle: "LightCrypto" },
+            { name: "GCR", handle: "GiganticRebirth" },
+            { name: "Satoshi Flipper", handle: "SatoshiFlipper" },
+            { name: "Kaleo", handle: "CryptoKaleo" },
+            { name: "Credible Crypto", handle: "CredibleCrypto" },
+            { name: "Wolf", handle: "IamCryptoWolf" },
+            { name: "DonAlt", handle: "CryptoDonAlt" },
+            { name: "Rekt Capital", handle: "rektcapital" },
+            { name: "Crypto Tony", handle: "CryptoTony__" },
+            { name: "Crypto Birb", handle: "crypto_birb" },
+            { name: "Crypto ISO", handle: "crypto_iso" },
+            { name: "Crypto Michaël", handle: "CryptoMichNL" },
+            { name: "Moon Overlord", handle: "MoonOverlord" },
+            { name: "Crypto Rand", handle: "crypto_rand" },
+            { name: "Crypto God John", handle: "Cryptogodjohn" },
+            { name: "Crypto Caesar", handle: "CryptoCaesar" },
+            { name: "Crypto Ed", handle: "Crypto_Ed_NL" },
+            { name: "Crypto Bullet", handle: "CryptoBullet1" },
+            { name: "Crypto Rover", handle: "rovercrc" },
+            { name: "Crypto Monk", handle: "thecryptomonk" },
+            { name: "Crypto Messiah", handle: "CryptoMessiah" },
+            { name: "Crypto Bitlord", handle: "Crypto_Bitlord" },
+            { name: "CryptoWhale", handle: "CryptoWhale" },
+            { name: "CryptoWendyO", handle: "CryptoWendyO" },
+            { name: "CryptoCred", handle: "CryptoCred" },
+            { name: "CryptoISO", handle: "crypto_iso" },
+            { name: "CryptoDaku", handle: "CryptoDaku" },
+            { name: "CryptoNTez", handle: "CryptoNTez" },
+            { name: "CryptoNova", handle: "cryptonova_" },
+            { name: "CryptoGainz", handle: "CryptoGainz1" },
+            { name: "CryptoGains", handle: "CryptoGains_" },
+            { name: "CryptoGuy", handle: "CryptoGuyZA" },
+            { name: "CryptoHornHairs", handle: "CryptoHornHairs" },
+            { name: "CryptoInsider", handle: "CryptoInsider" },
+            { name: "CryptoJebb", handle: "CryptoJebb" },
+            { name: "CryptoKea", handle: "CryptoKea" },
+            { name: "CryptoLinn", handle: "CryptoLinn" },
+            { name: "CryptoLark", handle: "CryptoLark" },
+            { name: "CryptoLion", handle: "CryptoLionNL" },
+            { name: "CryptoMocho", handle: "CryptoMocho" },
+            { name: "CryptoNTez", handle: "CryptoNTez" },
+            { name: "CryptoNova", handle: "cryptonova_" },
+            { name: "CryptoOracle", handle: "CryptoOracle_" },
+            { name: "CryptoPanic", handle: "CryptoPanic" },
+            { name: "CryptoPatterns", handle: "CryptoPatterns" },
+            { name: "CryptoPumpNews", handle: "CryptoPumpNews" },
+            { name: "CryptoRand", handle: "crypto_rand" },
+            { name: "CryptoRover", handle: "rovercrc" },
+            { name: "CryptoSavy", handle: "CryptoSavy" },
+            { name: "CryptoSays", handle: "CryptoSays" },
+            { name: "CryptoSelkie", handle: "CryptoSelkie" },
+            { name: "CryptoSnooper", handle: "CryptoSnooper" },
+            { name: "CryptoSqueeze", handle: "CryptoSqueeze" },
+            { name: "CryptoStache", handle: "CryptoStache" },
+            { name: "CryptoTaxMan", handle: "CryptoTaxMan" },
+            { name: "CryptoTea", handle: "CryptoTea_" },
+            { name: "CryptoThies", handle: "CryptoThies" },
+            { name: "CryptoWendyO", handle: "CryptoWendyO" },
+            { name: "CryptoWhale", handle: "CryptoWhale" },
+            { name: "CryptoYoda", handle: "CryptoYoda1338" },
+            { name: "CryptoZoe", handle: "CryptoZoe" },
+            { name: "CryptoZombie", handle: "CryptoZombie" },
+            { name: "Cryptoholic", handle: "Cryptoholic100" },
+            { name: "Cryptohustle", handle: "Cryptohustle" },
+            { name: "Cryptomanran", handle: "cryptomanran" },
+            { name: "Cryptomist", handle: "TheCryptomist" },
+            { name: "Cryptonator", handle: "CryptonatorX" },
+            { name: "Cryptonaut", handle: "cryptonaut42" },
+            { name: "Cryptopolis", handle: "CryptopolisTV" },
+            { name: "Cryptopredix", handle: "Cryptopredix" },
+            { name: "Cryptorecruitr", handle: "cryptorecruitr" },
+            { name: "CryptosRUs", handle: "CryptosR_Us" },
+            { name: "CryptosBatman", handle: "CryptosBatman" },
+            { name: "CryptosRUs", handle: "CryptosR_Us" },
+            { name: "Cryptostac", handle: "Cryptostac" },
+            { name: "Cryptostorm", handle: "Cryptostorm12" },
+            { name: "Cryptotrader", handle: "Cryptotrader_1" },
+            { name: "Cryptounfolded", handle: "Cryptounfolded" },
+            { name: "Cryptovestor", handle: "Cryptovestor" },
+            { name: "Cryptowhale", handle: "Cryptowhale" },
+            { name: "Cryptowojak", handle: "Cryptowojak" },
+            { name: "Cryptox100", handle: "Cryptox100" },
+            { name: "Cryptoyoda", handle: "Cryptoyoda1338" },
+            { name: "Cryptozombie", handle: "Cryptozombie" },
+            { name: "CrytoHustle", handle: "CrytoHustle" },
+            { name: "CrytoNTez", handle: "CrytoNTez" },
+            { name: "CrytoOracle", handle: "CrytoOracle_" },
+            { name: "CrytoPanic", handle: "CrytoPanic" },
+            { name: "CrytoPatterns", handle: "CrytoPatterns" },
+            { name: "CrytoPumpNews", handle: "CrytoPumpNews" },
+            { name: "CrytoRand", handle: "cryto_rand" },
+            { name: "CrytoRover", handle: "rovercrc" },
+            { name: "CrytoSavy", handle: "CrytoSavy" },
+            { name: "CrytoSays", handle: "CrytoSays" },
+            { name: "CrytoSelkie", handle: "CrytoSelkie" },
+            { name: "CrytoSnooper", handle: "CrytoSnooper" },
+            { name: "CrytoSqueeze", handle: "CrytoSqueeze" },
+            { name: "CrytoStache", handle: "CrytoStache" },
+            { name: "CrytoTaxMan", handle: "CrytoTaxMan" },
+            { name: "CrytoTea", handle: "CrytoTea_" },
+            { name: "CrytoThies", handle: "CrytoThies" },
+            { name: "CrytoWendyO", handle: "CrytoWendyO" },
+            { name: "CrytoWhale", handle: "CrytoWhale" },
+            { name: "CrytoYoda", handle: "CrytoYoda1338" },
+            { name: "CrytoZoe", handle: "CrytoZoe" },
+            { name: "CrytoZombie", handle: "CrytoZombie" }
+        ];
+
+        // Telegram call groups to monitor
+        const telegramGroups = [
+            "Alpha Sharks",
+            "Solana Calls",
+            "Whale Watch",
+            "Moon Group",
+            "Crypto Signals",
+            "Solana Alpha",
+            "Meme Coin Traders",
+            "Solana Traders",
+            "AI Crypto Traders",
+            "Pump.Fun Alerts",
+            "Solana Gem Hunters",
+            "DeFi Degens",
+            "Crypto Call Room",
+            "Solana Sniper",
+            "Early Call Group"
+        ];
+
+        // Recent Solana meme/AI coins (example data - in real app would come from API)
+        const recentCoins = [
+            "BONK", "MYRO", "WIF", "POPCAT", "SILLY", "NOS", "BORK", 
+            "HORSEMEAT", "SAMO", "FROG", "MOON", "DOGGO", "CATZ", 
+            "AI1", "NEURAL", "GPT", "LLAMA", "CHAT", "BOT", "ROBO"
+        ];
+
+        // Initialize Web3 with Solana RPC
+        const solanaRpcUrl = 'https://api.mainnet-beta.solana.com';
+        let solanaWeb3;
+        
+        try {
+            solanaWeb3 = new Web3(new Web3.providers.HttpProvider(solanaRpcUrl));
+        } catch (e) {
+            console.error("Error initializing Solana Web3:", e);
+            document.getElementById('connectionStatus').innerHTML = 
+                '<span class="status-indicator status-inactive"></span><span>Disconnected</span>';
+        }
+
+        // Track whale activity by coin
+        let whaleActivityByCoin = {};
+
+        // Function to fetch real whale transactions from Solana blockchain
+        async function fetchWhaleTransactions() {
+            const container = document.getElementById('whaleTransactions');
+            
+            try {
+                // In a real app, we would query Solana blockchain for recent transactions
+                // This is a simulation - replace with actual Solana API calls
+                
+                // Generate simulated transactions for each whale
+                const whaleTransactions = [];
+                const newTxCount = Math.floor(Math.random() * 5) + 1; // 1-5 new transactions
+                
+                // Reset whale activity tracking for this update
+                const currentWhaleActivity = {};
+                
+                // Generate new transactions
+                for (let i = 0; i < newTxCount; i++) {
+                    const randomWhale = whaleWallets[Math.floor(Math.random() * whaleWallets.length)];
+                    const isBuy = Math.random() > 0.3; // 70% chance of buy
+                    const randomCoin = recentCoins[Math.floor(Math.random() * recentCoins.length)];
+                    const amount = Math.floor(Math.random() * 10000000).toLocaleString();
+                    const value = `$${(Math.random() * 20000).toFixed(2)}`;
+                    
+                    // Track whale activity by coin
+                    if (!currentWhaleActivity[randomCoin]) {
+                        currentWhaleActivity[randomCoin] = { buys: [], sells: [] };
+                    }
+                    
+                    if (isBuy) {
+                        currentWhaleActivity[randomCoin].buys.push(randomWhale.name);
+                    } else {
+                        currentWhaleActivity[randomCoin].sells.push(randomWhale.name);
+                    }
+                    
+                    whaleTransactions.push({
+                        name: randomWhale.name,
+                        address: randomWhale.address,
+                        emoji: randomWhale.emoji,
+                        type: isBuy ? "buy" : "sell",
+                        coin: randomCoin,
+                        amount: amount,
+                        value: value,
+                        time: "Just now"
+                    });
+                }
+                
+                // Update the global whale activity tracker
+                for (const coin in currentWhaleActivity) {
+                    if (!whaleActivityByCoin[coin]) {
+                        whaleActivityByCoin[coin] = { buys: [], sells: [] };
+                    }
+                    
+                    // Add new buys
+                    currentWhaleActivity[coin].buys.forEach(whale => {
+                        if (!whaleActivityByCoin[coin].buys.includes(whale)) {
+                            whaleActivityByCoin[coin].buys.push(whale);
+                        }
+                    });
+                    
+                    // Add new sells
+                    currentWhaleActivity[coin].sells.forEach(whale => {
+                        if (!whaleActivityByCoin[coin].sells.includes(whale)) {
+                            whaleActivityByCoin[coin].sells.push(whale);
+                        }
+                    });
+                }
+                
+                renderWhaleTransactions(whaleTransactions);
+                updateWhaleActivityChart();
+                
+                // Show notification badge if there are new transactions
+                if (newTxCount > 0) {
+                    const badge = document.getElementById('whaleNotification');
+                    badge.textContent = newTxCount;
+                    badge.style.display = 'flex';
+                }
+                
+            } catch (error) {
+                console.error("Error fetching whale transactions:", error);
+                container.innerHTML = '<div class="error">Failed to load whale transactions. Please try again.</div>';
+            }
+        }
+        
+        // Function to fetch real-time tweets from crypto influencers
+        async function fetchInfluencerTweets() {
+            const container = document.getElementById('tweetFeed');
+            
+            try {
+                // In a real app, we would use Twitter API to fetch recent tweets
+                // This is a simulation - replace with actual Twitter API calls
+                
+                // Generate simulated tweets
+                const tweets = [];
+                const newTweetCount = Math.floor(Math.random() * 3) + 1; // 1-3 new tweets
+                
+                for (let i = 0; i < newTweetCount; i++) {
+                    const randomInfluencer = cryptoInfluencers[Math.floor(Math.random() * cryptoInfluencers.length)];
+                    const randomCoin = recentCoins[Math.floor(Math.random() * recentCoins.length)];
+                    const tweetTexts = [
+                        `Just loaded up on $${randomCoin} - this meme coin has serious potential with the upcoming Solana ecosystem developments! #Solana #Memecoins`,
+                        `The AI coins on Solana are starting to heat up. $${randomCoin} is my top pick from the recent pump.fun launches. DYOR but charts looking strong.`,
+                        `Quick thread on $${randomCoin}: 1/ Strong community growth 2/ Recent exchange listings 3/ Whale accumulation pattern emerging Could see another leg up soon.`,
+                        `If you're not watching the Solana meme coin space right now, you're missing out. The liquidity and volume is insane compared to other chains. $${randomCoin}`,
+                        `$${randomCoin} chart looks primed for breakout after this consolidation. Meme coins with strong communities tend to outperform in bull markets. #Solana`,
+                        `$${randomCoin} is showing strong support at current levels. I'm adding to my position here with a target of 2x from current price. #AltSeason`,
+                        `The $${randomCoin} team just announced a major partnership. This could be huge for adoption. Still early at this MC. #Solana #Crypto`,
+                        `Why I'm bullish on $${randomCoin}: - Active dev team - Growing community - Low MC - Strong chart structure Still under the radar for most.`,
+                        `$${randomCoin} breakout confirmed. Volume coming in strong. Targets: 1. 2x 2. 3.5x 3. 5x+ from current levels. #Crypto #Altcoin`
+                    ];
+                    
+                    const likes = Math.floor(Math.random() * 5000) + 500;
+                    const retweets = Math.floor(likes * 0.3);
+                    const replies = Math.floor(likes * 0.1);
+                    
+                    tweets.push({
+                        user: randomInfluencer.name,
+                        handle: `@${randomInfluencer.handle}`,
+                        content: tweetTexts[Math.floor(Math.random() * tweetTexts.length)],
+                        time: "Just now",
+                        likes: likes > 1000 ? `${(likes/1000).toFixed(1)}K` : likes.toString(),
+                        retweets: retweets > 1000 ? `${(retweets/1000).toFixed(1)}K` : retweets.toString(),
+                        replies: replies > 1000 ? `${(replies/1000).toFixed(1)}K` : replies.toString(),
+                        isNew: true
+                    });
+                }
+                
+                renderTweets(tweets);
+                
+                // Show notification badge if there are new tweets
+                if (newTweetCount > 0) {
+                    const badge = document.getElementById('tweetNotification');
+                    badge.textContent = newTweetCount;
+                    badge.style.display = 'flex';
+                }
+                
+            } catch (error) {
+                console.error("Error fetching tweets:", error);
+                container.innerHTML = '<div class="error">Failed to load tweets. Please try again.</div>';
+            }
+        }
+        
+        // Function to fetch telegram call trends
+        async function fetchTelegramCalls() {
+            const container = document.getElementById('telegramCalls');
+            
+            try {
+                // In a real app, we would scrape Telegram or use an API
+                // This is a simulation - replace with actual data collection
+                
+                // Generate simulated call data
+                const calls = [];
+                const newCallCount = Math.floor(Math.random() * 3) + 1; // 1-3 new calls
+                
+                // Take newCallCount random coins
+                const shuffledCoins = [...recentCoins].sort(() => 0.5 - Math.random());
+                const selectedCoins = shuffledCoins.slice(0, newCallCount);
+                
+                selectedCoins.forEach((coin, index) => {
+                    const callCount = Math.floor(Math.random() * 100) + 20;
+                    const trend = Math.random() > 0.5 ? "up" : "down";
+                    const trendPercent = Math.floor(Math.random() * 50) + 5;
+                    const groups = [];
+                    
+                    // Select 1-3 random groups
+                    const groupCount = Math.floor(Math.random() * 3) + 1;
+                    const shuffledGroups = [...telegramGroups].sort(() => 0.5 - Math.random());
+                    groups.push(...shuffledGroups.slice(0, groupCount));
+                    
+                    calls.push({
+                        rank: index + 1,
+                        coin: coin,
+                        groups: groups,
+                        callCount: callCount,
+                        trend: trend,
+                        trendPercent: trendPercent,
+                        isNew: true
+                    });
+                });
+                
+                renderTelegramCalls(calls);
+                updateCallTrendsChart(calls);
+                
+                // Show notification badge if there are new calls
+                if (newCallCount > 0) {
+                    const badge = document.getElementById('callNotification');
+                    badge.textContent = newCallCount;
+                    badge.style.display = 'flex';
+                }
+                
+            } catch (error) {
+                console.error("Error fetching telegram calls:", error);
+                container.innerHTML = '<div class="error">Failed to load telegram calls. Please try again.</div>';
+            }
+        }
+        
+        // Function to render whale transactions
+        function renderWhaleTransactions(data) {
+            const container = document.getElementById('whaleTransactions');
+            
+            // Clear only new transactions (keep previous ones)
+            const existingCards = container.querySelectorAll('.whale-card:not(.new-item)');
+            const newCards = container.querySelectorAll('.whale-card.new-item');
+            
+            // Remove old "new" items (they're not new anymore)
+            newCards.forEach(card => card.remove());
+            
+            // Add new transactions at the top
+            data.forEach(tx => {
+                const whaleCard = document.createElement('div');
+                whaleCard.className = 'whale-card fade-in new-item';
+                
+                // Check if multiple whales are buying this coin
+                const whaleCount = whaleActivityByCoin[tx.coin]?.buys?.length || 0;
+                const whaleCountIndicator = whaleCount > 1 ? `<span class="whale-count" title="${whaleCount} whales buying">${whaleCount}</span>` : '';
+                
+                whaleCard.innerHTML = `
+                    <div class="whale-header">
+                        <div class="whale-avatar">${tx.emoji}</div>
+                        <div>
+                            <div class="whale-name">${tx.name}</div>
+                            <div class="whale-address tooltip">
+                                ${tx.address.substring(0, 6)}...${tx.address.slice(-4)}
+                                <span class="tooltiptext">${tx.address}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="transaction">
+                        <div class="coin-info">
+                            <div class="coin-icon">${tx.coin.substring(0, 2)}</div>
+                            <div>
+                                <div class="${tx.type}">${tx.type.toUpperCase()} ${tx.coin} ${whaleCountIndicator}</div>
+                                <div class="tx-amount">${tx.amount} (${tx.value})</div>
+                            </div>
+                        </div>
+                        <div class="tx-time">${tx.time}</div>
+                    </div>
+                `;
+                
+                container.insertBefore(whaleCard, container.firstChild);
+            });
+        }
+        
+        // Function to render tweets
+        function renderTweets(data) {
+            const container = document.getElementById('tweetFeed');
+            
+            // Clear only new tweets (keep previous ones)
+            const existingTweets = container.querySelectorAll('.tweet-card:not(.new-item)');
+            const newTweets = container.querySelectorAll('.tweet-card.new-item');
+            
+            // Remove old "new" items (they're not new anymore)
+            newTweets.forEach(tweet => tweet.remove());
+            
+            // Add new tweets at the top
+            data.forEach(tweet => {
+                const tweetCard = document.createElement('div');
+                tweetCard.className = 'tweet-card fade-in new-item';
+                
+                tweetCard.innerHTML = `
+                    <div class="tweet-header">
+                        <div class="tweet-avatar">${tweet.user.substring(0, 1)}</div>
+                        <div>
+                            <div class="tweet-user">${tweet.user}</div>
+                            <div class="tweet-handle">${tweet.handle} · ${tweet.time}</div>
+                        </div>
+                    </div>
+                    <div class="tweet-content">${tweet.content}</div>
+                    <div class="tweet-actions">
+                        <div class="tweet-action">
+                            <i class="far fa-heart"></i> ${tweet.likes}
+                        </div>
+                        <div class="tweet-action">
+                            <i class="fas fa-retweet"></i> ${tweet.retweets}
+                        </div>
+                        <div class="tweet-action">
+                            <i class="far fa-comment"></i> ${tweet.replies}
+                        </div>
+                    </div>
+                `;
+                
+                container.insertBefore(tweetCard, container.firstChild);
+            });
+        }
+        
+        // Function to render telegram calls
+        function renderTelegramCalls(data) {
+            const container = document.getElementById('telegramCalls');
+            
+            // Clear only new calls (keep previous ones)
+            const existingCalls = container.querySelectorAll('.call-card:not(.new-item)');
+            const newCalls = container.querySelectorAll('.call-card.new-item');
+            
+            // Remove old "new" items (they're not new anymore)
+            newCalls.forEach(call => call.remove());
+            
+            // Add new calls at the top
+            data.forEach(call => {
+                const callCard = document.createElement('div');
+                callCard.className = 'call-card fade-in new-item';
+                
+                callCard.innerHTML = `
+                    <div class="call-rank">${call.rank}</div>
+                    <div class="call-info">
+                        <div class="call-coin">
+                            <div class="coin-icon">${call.coin.substring(0, 2)}</div>
+                            ${call.coin}
+                        </div>
+                        <div class="call-group">${call.groups.join(', ')}</div>
+                        <div class="trend-indicator">
+                            <i class="fas fa-arrow-${call.trend} ${call.trend}"></i>
+                            ${call.trendPercent}% ${call.trend}
+                        </div>
+                    </div>
+                    <div class="call-count">${call.callCount} calls</div>
+                `;
+                
+                container.insertBefore(callCard, container.firstChild);
+            });
+        }
+        
+        // Chart for whale activity
+        let whaleActivityChart;
+        function updateWhaleActivityChart() {
+            const ctx = document.getElementById('whaleActivityChart').getContext('2d');
+            
+            // Prepare data for chart
+            const coins = Object.keys(whaleActivityByCoin);
+            const buyData = coins.map(coin => whaleActivityByCoin[coin].buys.length);
+            const sellData = coins.map(coin => whaleActivityByCoin[coin].sells.length);
+            
+            if (whaleActivityChart) {
+                whaleActivityChart.destroy();
+            }
+            
+            whaleActivityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: coins,
+                    datasets: [
+                        {
+                            label: 'Buys',
+                            data: buyData,
+                            backgroundColor: '#14F195',
+                            borderColor: '#14F195',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Sells',
+                            data: sellData,
+                            backgroundColor: '#FF5252',
+                            borderColor: '#FF5252',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#F0F0F0'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#F0F0F0'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#F0F0F0'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Chart for call trends
+        let callTrendsChart;
+        function updateCallTrendsChart(callData) {
+            const ctx = document.getElementById('callTrendsChart').getContext('2d');
+            
+            const coins = callData.map(call => call.coin);
+            const callCounts = callData.map(call => call.callCount);
+            const trendColors = callData.map(call => call.trend === 'up' ? '#14F195' : '#FF5252');
+            
+            if (callTrendsChart) {
+                callTrendsChart.destroy();
+            }
+            
+            callTrendsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: coins,
+                    datasets: [{
+                        label: 'Call Count',
+                        data: callCounts,
+                        backgroundColor: trendColors,
+                        borderColor: trendColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#F0F0F0'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#F0F0F0'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Add influencer functionality
+        document.getElementById('addInfluencerBtn').addEventListener('click', function() {
+            const handle = document.getElementById('newInfluencer').value.trim();
+            if (handle) {
+                // In a real app, this would add to your database/API
+                alert(`Added @${handle} to tracking list. Now monitoring for tweets.`);
+                document.getElementById('newInfluencer').value = '';
+                
+                // Add to our local list (in a real app would be saved to database)
+                cryptoInfluencers.push({
+                    name: handle,
+                    handle: handle
+                });
+                
+                // Refresh tweets to include new influencer
+                fetchInfluencerTweets();
+            }
+        });
+        
+        // Refresh buttons functionality
+        document.getElementById('refreshWhales').addEventListener('click', function() {
+            const panel = this.closest('.panel');
+            panel.querySelector('.panel-title i').classList.add('fa-spin');
+            document.getElementById('whaleNotification').style.display = 'none';
+            
+            fetchWhaleTransactions();
+            
+            setTimeout(() => {
+                panel.querySelector('.panel-title i').classList.remove('fa-spin');
+            }, 1000);
+        });
+        
+        document.getElementById('refreshTweets').addEventListener('click', function() {
+            const panel = this.closest('.panel');
+            panel.querySelector('.panel-title i').classList.add('fa-spin');
+            document.getElementById('tweetNotification').style.display = 'none';
+            
+            fetchInfluencerTweets();
+            
+            setTimeout(() => {
+                panel.querySelector('.panel-title i').classList.remove('fa-spin');
+            }, 1000);
+        });
+        
+        document.getElementById('refreshCalls').addEventListener('click', function() {
+            const panel = this.closest('.panel');
+            panel.querySelector('.panel-title i').classList.add('fa-spin');
+            document.getElementById('callNotification').style.display = 'none';
+            
+            fetchTelegramCalls();
+            
+            setTimeout(() => {
+                panel.querySelector('.panel-title i').classList.remove('fa-spin');
+            }, 1000);
+        });
+        
+        // Time filter functionality
+        document.getElementById('timeRange').addEventListener('change', function() {
+            const timeRange = this.value;
+            
+            // Show loading state
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.querySelector('.panel-title i').classList.add('fa-spin');
+            });
+            
+            // Clear notifications
+            document.getElementById('whaleNotification').style.display = 'none';
+            document.getElementById('tweetNotification').style.display = 'none';
+            document.getElementById('callNotification').style.display = 'none';
+            
+            // In a real app, this would filter the data based on time range
+            // For now, we'll just refresh all data
+            fetchWhaleTransactions();
+            fetchInfluencerTweets();
+            fetchTelegramCalls();
+            
+            setTimeout(() => {
+                document.querySelectorAll('.panel-title i').forEach(icon => {
+                    icon.classList.remove('fa-spin');
+                });
+            }, 1000);
+        });
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial data load
+            fetchWhaleTransactions();
+            fetchInfluencerTweets();
+            fetchTelegramCalls();
+            
+            // Set up real-time updates with no delays
+            setInterval(fetchWhaleTransactions, 3000); // Update whales every 3 seconds
+            setInterval(fetchInfluencerTweets, 3000); // Update tweets every 3 seconds
+            setInterval(fetchTelegramCalls, 3000); // Update calls every 3 seconds
+            
+            // Check connection status periodically
+            setInterval(() => {
+                // In a real app, we would actually check the connection
+                // For demo purposes, we'll just show connected
+                document.getElementById('connectionStatus').innerHTML = 
+                    '<span class="status-indicator status-active"></span><span>Connected</span>';
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
